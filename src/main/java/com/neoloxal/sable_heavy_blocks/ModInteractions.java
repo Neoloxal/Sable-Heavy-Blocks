@@ -28,6 +28,8 @@ import java.util.List;
 public class ModInteractions {
     public static final Logger LOGGER = LogUtils.getLogger();
 
+    private static final ThreadLocal<Boolean> PROCESSING = ThreadLocal.withInitial(() -> false);
+
     @SubscribeEvent
     public static void placeBlock(BlockEvent.EntityPlaceEvent event) {
         updateBlock(
@@ -50,6 +52,22 @@ public class ModInteractions {
         );
     }
 
+    @SubscribeEvent
+    public static void blockUpdated(BlockEvent.NeighborNotifyEvent event) {
+        if (PROCESSING.get()) {
+            return;
+        }
+
+        LevelAccessor level = event.getLevel();
+        BlockPos aboveBlock = moveBlockPos(event.getPos(), 0, 1, 0);
+        updateBlock(
+                level,
+                aboveBlock,
+                level.getBlockState(aboveBlock),
+                false
+        );
+    }
+
     private static void updateBlock(LevelAccessor level, BlockPos blockPos, BlockState state, Boolean assumeAir) {
         if (!level.isClientSide()) {
             ServerLevel serverLevel = (ServerLevel) level;
@@ -58,31 +76,36 @@ public class ModInteractions {
             if (mass >= 4 && (level.getBlockState(moveBlockPos(blockPos, 0, -1, 0)).is(Blocks.AIR) || assumeAir)) {
                 SubLevelAccess subLevelAccess = SableCompanion.INSTANCE.getContaining((Level) level, blockPos);
                 if (subLevelAccess == null) {
-                    Collection<BlockPos> blocks = getBlocks(level, blockPos);
-                    ServerSubLevel serverSubLevel = SubLevelAssemblyHelper.assembleBlocks(
-                            serverLevel,
-                            blockPos,
-                            blocks,
-                            new BoundingBox3i(0, 0, 0, 5, 4, 5)
-                    );
-                    List<BlockPos> connected = List.of(
-                            moveBlockPos(blockPos, 0, 1, 0), // 1 above
-                            moveBlockPos(blockPos, 0, -1, 0), // 1 down
-                            moveBlockPos(blockPos, 1, 0, 0), // 1 east
-                            moveBlockPos(blockPos, -1, 0, 0), // 1 west
-                            moveBlockPos(blockPos, 0, 0, 1), // 1 south
-                            moveBlockPos(blockPos, 0, 0, -1) // 1 north
-                    );
+                    PROCESSING.set(true);
+                    try {
+                        Collection<BlockPos> blocks = getBlocks(level, blockPos);
+                        ServerSubLevel serverSubLevel = SubLevelAssemblyHelper.assembleBlocks(
+                                serverLevel,
+                                blockPos,
+                                blocks,
+                                new BoundingBox3i(0, 0, 0, 5, 4, 5)
+                        );
+                        List<BlockPos> connected = List.of(
+                                moveBlockPos(blockPos, 0, 1, 0), // 1 above
+                                moveBlockPos(blockPos, 0, -1, 0), // 1 down
+                                moveBlockPos(blockPos, 1, 0, 0), // 1 east
+                                moveBlockPos(blockPos, -1, 0, 0), // 1 west
+                                moveBlockPos(blockPos, 0, 0, 1), // 1 south
+                                moveBlockPos(blockPos, 0, 0, -1) // 1 north
+                        );
 
-                    blocks.forEach(pos -> {
-                        serverLevel.blockUpdated(pos, Blocks.AIR);
-                        for (Direction direction : Direction.values()) {
-                            BlockPos connectedPos = pos.relative(direction);
-                            BlockState connectedState = serverLevel.getBlockState(connectedPos);
-                            BlockState updatedConnectedState = connectedState.updateShape(direction.getOpposite(), Blocks.AIR.defaultBlockState(), serverLevel, connectedPos, pos);
-                            Block.updateOrDestroy(connectedState, updatedConnectedState, serverLevel, connectedPos, Block.UPDATE_ALL);
-                        }
-                    });
+                        blocks.forEach(pos -> {
+                            serverLevel.blockUpdated(pos, Blocks.AIR);
+                            for (Direction direction : Direction.values()) {
+                                BlockPos connectedPos = pos.relative(direction);
+                                BlockState connectedState = serverLevel.getBlockState(connectedPos);
+                                BlockState updatedConnectedState = connectedState.updateShape(direction.getOpposite(), Blocks.AIR.defaultBlockState(), serverLevel, connectedPos, pos);
+                                Block.updateOrDestroy(connectedState, updatedConnectedState, serverLevel, connectedPos, Block.UPDATE_ALL);
+                            }
+                        });
+                    } finally {
+                        PROCESSING.set(false);
+                    }
                 }
             }
         }
