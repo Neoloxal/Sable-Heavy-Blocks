@@ -8,9 +8,11 @@ import dev.ryanhcode.sable.companion.math.BoundingBox3i;
 import dev.ryanhcode.sable.physics.config.block_properties.PhysicsBlockPropertyHelper;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -56,12 +58,31 @@ public class ModInteractions {
             if (mass >= 4 && (level.getBlockState(moveBlockPos(blockPos, 0, -1, 0)).is(Blocks.AIR) || assumeAir)) {
                 SubLevelAccess subLevelAccess = SableCompanion.INSTANCE.getContaining((Level) level, blockPos);
                 if (subLevelAccess == null) {
+                    Collection<BlockPos> blocks = getBlocks(level, blockPos);
                     ServerSubLevel serverSubLevel = SubLevelAssemblyHelper.assembleBlocks(
                             serverLevel,
                             blockPos,
-                            getBlocks(level, blockPos),
-                            new BoundingBox3i(0, 0, 0, 3, 3, 3)
+                            blocks,
+                            new BoundingBox3i(0, 0, 0, 5, 4, 5)
                     );
+                    List<BlockPos> connected = List.of(
+                            moveBlockPos(blockPos, 0, 1, 0), // 1 above
+                            moveBlockPos(blockPos, 0, -1, 0), // 1 down
+                            moveBlockPos(blockPos, 1, 0, 0), // 1 east
+                            moveBlockPos(blockPos, -1, 0, 0), // 1 west
+                            moveBlockPos(blockPos, 0, 0, 1), // 1 south
+                            moveBlockPos(blockPos, 0, 0, -1) // 1 north
+                    );
+
+                    blocks.forEach(pos -> {
+                        serverLevel.blockUpdated(pos, Blocks.AIR);
+                        for (Direction direction : Direction.values()) {
+                            BlockPos connectedPos = pos.relative(direction);
+                            BlockState connectedState = serverLevel.getBlockState(connectedPos);
+                            BlockState updatedConnectedState = connectedState.updateShape(direction.getOpposite(), Blocks.AIR.defaultBlockState(), serverLevel, connectedPos, pos);
+                            Block.updateOrDestroy(connectedState, updatedConnectedState, serverLevel, connectedPos, Block.UPDATE_ALL);
+                        }
+                    });
                 }
             }
         }
@@ -119,7 +140,6 @@ public class ModInteractions {
             LOGGER.debug("Checking if block at {}", pos);
             if (list.contains(pos) && !list.contains(blockPos) && !level.getBlockState(blockPos).is(Blocks.AIR)) {
                 list.add(blockPos);
-                orginList.remove(blockPos);
                 LOGGER.debug("Block found at {}, adding {} to list.", pos, blockPos);
             }
         });
