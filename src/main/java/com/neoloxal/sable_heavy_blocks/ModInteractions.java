@@ -100,12 +100,12 @@ public class ModInteractions {
                 moveBlockPos(blockPos, 0, -1, -1) // 1 north, 1 down
         );
         for (int i = 0; i < validatePositions.size(); i++) {
-            validatePositions.forEach(pos -> validateAndAddBlockPos(list, level, pos));
+            validatePositions.forEach(pos -> validateAndAddBlockPos(list, validatePositions, level, pos));
         }
         return list;
     }
 
-    private static void validateAndAddBlockPos(List<BlockPos> list, LevelAccessor level, BlockPos blockPos) {
+    private static void validateAndAddBlockPos(List<BlockPos> list, List<BlockPos> orginList, LevelAccessor level, BlockPos blockPos) {
         List<BlockPos> connected = List.of(
                 moveBlockPos(blockPos, 0, 1, 0), // 1 above
                 moveBlockPos(blockPos, 0, -1, 0), // 1 down
@@ -119,6 +119,7 @@ public class ModInteractions {
             LOGGER.debug("Checking if block at {}", pos);
             if (list.contains(pos) && !list.contains(blockPos) && !level.getBlockState(blockPos).is(Blocks.AIR)) {
                 list.add(blockPos);
+                orginList.remove(blockPos);
                 LOGGER.debug("Block found at {}, adding {} to list.", pos, blockPos);
             }
         });
