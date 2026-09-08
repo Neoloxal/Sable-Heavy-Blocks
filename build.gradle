@@ -33,11 +33,6 @@ repositories {
 
     maven { url = "https://maven.createmod.net" } // Create, Ponder, Flywheel
     maven { url = "https://maven.ithundxr.dev/snapshots" } // Registrate
-
-    maven {
-        name = "jitpack"
-        url = "https://jitpack.io"
-    }
 }
 
 base {
