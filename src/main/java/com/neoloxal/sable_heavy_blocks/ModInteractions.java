@@ -14,6 +14,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.Rotations;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
@@ -142,12 +143,12 @@ public class ModInteractions {
                 moveBlockPos(blockPos, 0, -1, -1) // 1 north, 1 down
         );
         for (int i = 0; i < validatePositions.size(); i++) {
-            validatePositions.forEach(pos -> validateAndAddBlockPos(list, validatePositions, level, pos));
+            validatePositions.forEach(pos -> validateAndAddBlockPos(list, level, pos));
         }
         return list;
     }
 
-    private static void validateAndAddBlockPos(List<BlockPos> list, List<BlockPos> orginList, LevelAccessor level, BlockPos blockPos) {
+    private static void validateAndAddBlockPos(List<BlockPos> list, LevelAccessor level, BlockPos blockPos) {
         List<BlockPos> connected = List.of(
                 moveBlockPos(blockPos, 0, 1, 0), // 1 above
                 moveBlockPos(blockPos, 0, -1, 0), // 1 down
@@ -159,9 +160,12 @@ public class ModInteractions {
 
         connected.forEach(pos -> {
             LOGGER.debug("Checking if block at {}", pos);
-            if (list.contains(pos) && !list.contains(blockPos) && !level.getBlockState(blockPos).is(Blocks.AIR)) {
-                list.add(blockPos);
-                LOGGER.debug("Block found at {}, adding {} to list.", pos, blockPos);
+            if (list.contains(pos) && !list.contains(blockPos)) {
+                BlockState block = level.getBlockState(blockPos);
+                if (!block.isAir() && block.canSurvive(level, blockPos)) {
+                    list.add(blockPos);
+                    LOGGER.debug("Block found at {}, adding {} to list.", pos, blockPos);
+                }
             }
         });
     }
