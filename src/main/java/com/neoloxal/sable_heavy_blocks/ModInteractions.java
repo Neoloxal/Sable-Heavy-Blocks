@@ -73,7 +73,7 @@ public class ModInteractions {
             try {
                 PROCESSING.set(true);
                 double mass = PhysicsBlockPropertyHelper.getMass(level, blockPos, state);
-                if (mass >= 4 && mass < 1000) {
+                if (mass >= SHBServerConfig.CONFIG.minMassToBreak.getAsDouble() && !state.is(SableHeavyBlocksTags.ILLEGAL_BLOCKS) || state.is(SableHeavyBlocksTags.ADDITIONAL_HEAVY_BLOCKS)) {
                     Pair<List<BlockPos>, Boolean> unstableBlocks = getUnstableBlocks(level, blockPos, -1, FilterType.LIGHT_BLOCKS);
                     if (!unstableBlocks.getB()) {
                         SubLevelAccess subLevelAccess = SableCompanion.INSTANCE.getContaining((Level) level, blockPos);

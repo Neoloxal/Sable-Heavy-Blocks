@@ -1,4 +1,6 @@
 {
   "config.sable_heavy_blocks.min_distance_for_support": "Minimum Distance for Support",
-  "config.sable_heavy_blocks.min_distance_for_support.tooltip": "The minimum block down a support has to go to support heavy blocks."
+  "config.sable_heavy_blocks.min_distance_for_support.tooltip": "The minimum block down a support has to go to support heavy blocks.",
+  "config.sable_heavy_blocks.min_mass_to_break": "Minimum Mass Needed to Break",
+  "config.sable_heavy_blocks.min_mass_to_break.tooltip": "the minimum mass needed to break."
 }

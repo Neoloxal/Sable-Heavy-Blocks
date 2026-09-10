@@ -3,7 +3,6 @@ package com.neoloxal.sable_heavy_blocks;
 import dev.ryanhcode.sable.physics.config.block_properties.PhysicsBlockPropertyHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.function.Predicate;
@@ -12,9 +11,9 @@ public enum FilterType {
     ALL(filterRecord -> true),
     HEAVY_BLOCKS(filterRecord -> {
         double mass = PhysicsBlockPropertyHelper.getMass(filterRecord.level(), filterRecord.pos(), filterRecord.state());
-        return mass >= 4 && !filterRecord.state().is(Blocks.BEDROCK);
+        return mass >= SHBServerConfig.CONFIG.minMassToBreak.getAsDouble() && !filterRecord.state().is(SableHeavyBlocksTags.ILLEGAL_BLOCKS);
     }),
-    LIGHT_BLOCKS(filterRecord -> PhysicsBlockPropertyHelper.getMass(filterRecord.level(), filterRecord.pos(), filterRecord.state()) < 4);
+    LIGHT_BLOCKS(filterRecord -> PhysicsBlockPropertyHelper.getMass(filterRecord.level(), filterRecord.pos(), filterRecord.state()) < SHBServerConfig.CONFIG.minMassToBreak.getAsDouble() && !filterRecord.state().is(SableHeavyBlocksTags.ILLEGAL_BLOCKS));
 
     private final Predicate<FilterRecord> predicate;
 
