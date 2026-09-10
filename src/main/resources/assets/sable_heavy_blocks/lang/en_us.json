@@ -1,5 +1,4 @@
 {
-  "itemGroup.sable_heavy_blocks": "Example Mod Tab",
-  "block.sable_heavy_blocks.example_block": "Example Block",
-  "item.sable_heavy_blocks.example_item": "Example Item"
+  "config.sable_heavy_blocks.min_distance_for_support": "Minimum Distance for Support",
+  "config.sable_heavy_blocks.min_distance_for_support.tooltip": "The minimum block down a support has to go to support heavy blocks."
 }
